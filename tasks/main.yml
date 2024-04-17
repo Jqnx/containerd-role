@@ -28,6 +28,19 @@
     content: "{{ containerd_config_default.stdout }}"
     mode: '0644'
 
+- name: Set sandbox_image to 3.9
+  ansible.builtin.lineinfile:
+    insertafter: '.*\[plugins."io.containerd.grpc.v1.cri"\]$'
+    line: '    sandbox_image = "registry.k8s.io/pause:3.9"'
+    state: present
+    path: /tmp/containerd_config.toml
+
+- name: Make sure sandbox_image = "registry.k8s.io/pause:3.6" is not set
+  ansible.builtin.lineinfile:
+    path: /tmp/containerd_config.toml
+    state: absent
+    line: '    sandbox_image = "registry.k8s.io/pause:3.6"'
+
 - name: Set Cgroup driver to systemd
   ansible.builtin.lineinfile:
     insertafter: '.*\[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options\]$'
@@ -40,9 +53,6 @@
     path: /tmp/containerd_config.toml
     state: absent
     line: '            SystemdCgroup = false'
-  notify:
-    - Restart containerd
-
 
 - name: Copy config.toml to /etc/containerd
   ansible.builtin.copy:
